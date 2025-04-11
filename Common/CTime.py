@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class CTime:
-    def __init__(self, year, month, day, hour, minute, second=0, auto=True):
+    def __init__(self, year, month, day, hour, minute, second=0, auto=False, utc=True):
         self.year = year
         self.month = month
         self.day = day
@@ -10,6 +10,7 @@ class CTime:
         self.minute = minute
         self.second = second
         self.auto = auto  # 自适应对天的理解
+        self.utc = utc  # 是否使用UTC时间
         self.set_timestamp()  # set self.ts
 
     def __str__(self):
@@ -24,7 +25,7 @@ class CTime:
         else:
             return f"{self.year:04}/{self.month:02}/{self.day:02} {self.hour:02}:{self.minute:02}"
 
-    def toDateStr(self, splt=''):
+    def toDateStr(self, splt=""):
         return f"{self.year:04}{splt}{self.month:02}{splt}{self.day:02}"
 
     def toDate(self):
@@ -34,8 +35,15 @@ class CTime:
         if self.hour == 0 and self.minute == 0 and self.auto:
             date = datetime(self.year, self.month, self.day, 23, 59, self.second)
         else:
-            date = datetime(self.year, self.month, self.day, self.hour, self.minute, self.second)
-        self.ts = date.timestamp()
+            date = datetime(
+                self.year, self.month, self.day, self.hour, self.minute, self.second
+            )
+
+        if self.utc:
+            # Convert to UTC timestamp to avoid DST issues
+            self.ts = int(date.replace(tzinfo=timezone.utc).timestamp())
+        else:
+            self.ts = date.timestamp()
 
     def __gt__(self, t2):
         return self.ts > t2.ts
